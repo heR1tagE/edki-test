@@ -32,6 +32,10 @@
       font-size: 16px; /* Розмір шрифту відповідей для десктопів */
     }
 
+    .feedback {
+        margin-top: 10px;
+    }
+
     .answers input[type="radio"] {
       margin-right: 10px;
       transform: scale(1.2); /* Збільшуємо розмір radio-кнопок */
@@ -341,78 +345,87 @@
   { q: "Який метод захисту використовується для запобігання зчитуванню інформації через теплові канали?", a: ["Шифрування", "Екранування", "Теплоізоляція", "Генерація шуму"], correct: 2, section: "7.3" }
 ]
 
-  // Глобальна змінна для зберігання відображених питань
-  let selectedQuestions = [];
+// Глобальна змінна для зберігання відображених питань
+let selectedQuestions = [];
 
-  // Функція для випадкового вибору 50 питань
-  function getRandomQuestions() {
-    const shuffled = questions.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 50);
-  }
+// Функція для випадкового вибору 50 питань
+function getRandomQuestions() {
+  const shuffled = questions.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 50);
+}
 
-  // Відображення тесту
-  function displayQuiz() {
-    const quizDiv = document.getElementById('quiz');
-    quizDiv.innerHTML = ''; // Очищаємо контейнер перед відображенням нових питань
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = ''; // Очищаємо попередній результат
+// Відображення тесту
+function displayQuiz() {
+  const quizDiv = document.getElementById('quiz');
+  quizDiv.innerHTML = ''; // Очищаємо контейнер перед відображенням нових питань
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = ''; // Очищаємо попередній результат
 
-    // Вибираємо 50 випадкових питань і зберігаємо їх
-    selectedQuestions = getRandomQuestions();
+  // Вибираємо 50 випадкових питань і зберігаємо їх
+  selectedQuestions = getRandomQuestions();
 
-    // Відображаємо кожне питання
-    selectedQuestions.forEach((question, index) => {
-      const questionDiv = document.createElement('div');
-      questionDiv.classList.add('question');
-      questionDiv.setAttribute('data-index', index); // Додаємо атрибут для ідентифікації
+  // Відображаємо кожне питання
+  selectedQuestions.forEach((question, index) => {
+    const questionDiv = document.createElement('div');
+    questionDiv.classList.add('question');
+    questionDiv.setAttribute('data-index', index);
 
-      // Створюємо HTML для питання та відповідей
-      questionDiv.innerHTML = `
-        <p><strong>Питання ${index + 1} (${question.section}):</strong> ${question.q}</p>
-        <div class="answers">
-          ${question.a.map((answer, i) => `
-            <label>
-              <input type="radio" name="q${index}" value="${i}">
-              ${answer}
-            </label>
-          `).join('')}
-        </div>
-      `;
-      quizDiv.appendChild(questionDiv);
+    // Створюємо HTML для питання та відповідей
+    questionDiv.innerHTML = `
+      <p><strong>Питання ${index + 1} (${question.section}):</strong> ${question.q}</p>
+      <div class="answers">
+        ${question.a.map((answer, i) => `
+          <label>
+            <input type="radio" name="q${index}" value="${i}">
+            ${answer}
+          </label>
+        `).join('')}
+      </div>
+      <div class="feedback"></div> <!-- Додаємо контейнер для правильної відповіді -->
+    `;
+    quizDiv.appendChild(questionDiv);
+  });
+}
+
+// Перевірка відповідей
+function checkAnswers() {
+  let score = 0;
+  const questionDivs = document.querySelectorAll('.question');
+
+  questionDivs.forEach((questionDiv, index) => {
+    const question = selectedQuestions[index];
+    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+    const feedbackDiv = questionDiv.querySelector('.feedback'); // Знаходимо контейнер для фідбеку
+
+    // Блокуємо radio-кнопки, щоб користувач не міг змінити вибір після перевірки
+    const radioButtons = questionDiv.querySelectorAll(`input[name="q${index}"]`);
+    radioButtons.forEach(radio => {
+      radio.disabled = true; // Вимикаємо можливість зміни вибору
     });
-  }
 
-  // Перевірка відповідей (залишаю без змін, для контексту)
-  function checkAnswers() {
-    let score = 0;
-    const questionDivs = document.querySelectorAll('.question');
-
-    questionDivs.forEach((questionDiv, index) => {
-      const question = selectedQuestions[index];
-      const selected = document.querySelector(`input[name="q${index}"]:checked`);
-
-      if (selected) {
-        const userAnswer = parseInt(selected.value);
-        if (userAnswer === question.correct) {
-          questionDiv.classList.add('correct');
-          score++;
-        } else {
-          questionDiv.classList.add('incorrect');
-          const correctAnswer = question.a[question.correct];
-          questionDiv.innerHTML += `<p style="color: green;">Правильна відповідь: ${correctAnswer}</p>`;
-        }
+    if (selected) {
+      const userAnswer = parseInt(selected.value);
+      if (userAnswer === question.correct) {
+        questionDiv.classList.add('correct');
+        score++;
+        feedbackDiv.innerHTML = `<p style="color: green;">Правильно!</p>`;
       } else {
         questionDiv.classList.add('incorrect');
         const correctAnswer = question.a[question.correct];
-        questionDiv.innerHTML += `<p style="color: green;">Правильна відповідь: ${correctAnswer}</p>`;
+        feedbackDiv.innerHTML = `<p style="color: green;">Правильна відповідь: ${correctAnswer}</p>`;
       }
-    });
+    } else {
+      questionDiv.classList.add('incorrect');
+      const correctAnswer = question.a[question.correct];
+      feedbackDiv.innerHTML = `<p style="color: green;">Правильна відповідь: ${correctAnswer}</p>`;
+    }
+  });
 
-    document.getElementById('result').innerHTML = `Ваш результат: ${score} з 50`;
-  }
+  document.getElementById('result').innerHTML = `Ваш результат: ${score} з 50`;
+}
 
-  // Запуск тесту
-  displayQuiz();
+// Запуск тесту
+displayQuiz();
 </script>
 </body>
 </html>
